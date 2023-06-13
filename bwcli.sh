@@ -53,10 +53,23 @@ function bw_move_item_to_folder()
     folder="$2"
     folder_id="$(bw_get_folder_id "${folder}")"
     item_id="$(bw_get_item_id "${item_name}")"
-    echo "${folder}: ${folder_id}"
-    echo "${item_name}: ${item_id}"
 
     bw get item "${item_id}" | jq ".folderId=\"${folder_id}\"" | bw encode | bw edit item "${item_id}"
+}
+
+function bw_add_uri_to_item()
+{
+    local uri
+    local item_name
+    local item_id
+
+    uri="$1"
+    item_name="$2"
+    item_id="$(bw_get_item_id "${item_name}")"
+
+    #bw list items | jq ".[] |select(.name==\"foo entry\")" | jq ".login.uris+=[$(bw get template item.login.uri | jq ".uri=\"http://www.google.com\"")]"
+
+    bw get item "${item_id}" | jq ".login.uris+=[$(bw get template item.login.uri | jq ".uri=\"${uri}\"")]" | bw encode | bw edit item "${item_id}"
 }
 
 function bw_create_folder()
