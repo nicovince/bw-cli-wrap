@@ -10,8 +10,8 @@ function bw_create_item()
     username="$2"
     password="$3"
 
-
-    bw get template item | jq ".name=\"${item_name}\" | .login=$(bw get template item.login | jq ".username=\"${username}\" | .password=\"${password}\" | .notes=null")" | bw encode | bw create item
+    echo "Create item '${item_name}'"
+    bw get template item | jq ".name=\"${item_name}\" | .notes=null | .login=$(bw get template item.login | jq ".username=\"${username}\" | .password=\"${password}\"")" | bw encode | bw create item > /dev/null
 }
 
 function folder_exist()
@@ -54,7 +54,8 @@ function bw_move_item_to_folder()
     folder_id="$(bw_get_folder_id "${folder}")"
     item_id="$(bw_get_item_id "${item_name}")"
 
-    bw get item "${item_id}" | jq ".folderId=\"${folder_id}\"" | bw encode | bw edit item "${item_id}"
+    echo "Move '${item_name} to '${folder}'"
+    bw get item "${item_id}" | jq ".folderId=\"${folder_id}\"" | bw encode | bw edit item "${item_id}" > /dev/null
 }
 
 function bw_add_uri_to_item()
@@ -67,9 +68,8 @@ function bw_add_uri_to_item()
     item_name="$2"
     item_id="$(bw_get_item_id "${item_name}")"
 
-    #bw list items | jq ".[] |select(.name==\"foo entry\")" | jq ".login.uris+=[$(bw get template item.login.uri | jq ".uri=\"http://www.google.com\"")]"
-
-    bw get item "${item_id}" | jq ".login.uris+=[$(bw get template item.login.uri | jq ".uri=\"${uri}\"")]" | bw encode | bw edit item "${item_id}"
+    echo "Add URI '${uri}' to '${item_name}'"
+    bw get item "${item_id}" | jq ".login.uris+=[$(bw get template item.login.uri | jq ".uri=\"${uri}\"")]" | bw encode | bw edit item "${item_id}" > /dev/null
 }
 
 function bw_create_folder()
@@ -88,4 +88,24 @@ function bw_create_folder()
     fi
     echo "Create Folder ${folder}"
     bw get template folder | jq ".name=\"${folder}\"" | bw encode | bw create folder
+}
+
+function bw_www_login_item()
+{
+    local item_name
+    local username
+    local password
+    local uri
+
+    item_name="$1"
+    username="$2"
+    password="$3"
+    uri="$4"
+
+    bw_create_item "${item_name}" "${username}" "${password}"
+    bw sync
+    bw_move_item_to_folder "${item_name}" "www"
+    bw sync
+    bw_add_uri_to_item "${uri}" "${item_name}"
+    bw sync
 }
